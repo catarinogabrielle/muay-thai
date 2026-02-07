@@ -3,49 +3,37 @@ const System = {
         const modal = document.getElementById('sys-modal');
         document.getElementById('sys-modal-title').innerText = type === 'error' ? 'Erro' : 'Aviso';
         document.getElementById('sys-modal-msg').innerText = msg;
-
         document.getElementById('sys-modal-input').style.display = 'none';
         document.getElementById('sys-btn-cancel').style.display = 'none';
-
         const btnOk = document.getElementById('sys-btn-ok');
         btnOk.innerText = 'OK';
         btnOk.onclick = () => System.close();
-
         modal.style.display = 'flex';
     },
-
     confirm: (msg, onConfirm) => {
         const modal = document.getElementById('sys-modal');
         document.getElementById('sys-modal-title').innerText = 'Confirmação';
         document.getElementById('sys-modal-msg').innerText = msg;
-
         document.getElementById('sys-modal-input').style.display = 'none';
         document.getElementById('sys-btn-cancel').style.display = 'block';
-
         const btnOk = document.getElementById('sys-btn-ok');
         btnOk.innerText = 'CONFIRMAR';
         btnOk.onclick = () => {
             System.close();
             onConfirm();
         };
-
         modal.style.display = 'flex';
     },
-
     input: (msg, onConfirm) => {
         const modal = document.getElementById('sys-modal');
         const inputField = document.getElementById('sys-modal-input');
-
         document.getElementById('sys-modal-title').innerText = 'Digitar';
         document.getElementById('sys-modal-msg').innerText = msg;
-
         inputField.style.display = 'block';
         inputField.value = '';
         document.getElementById('sys-btn-cancel').style.display = 'block';
-
         const btnOk = document.getElementById('sys-btn-ok');
         btnOk.innerText = 'SALVAR';
-
         btnOk.onclick = () => {
             const val = inputField.value.trim();
             if (val) {
@@ -55,16 +43,13 @@ const System = {
                 inputField.style.borderColor = 'red';
             }
         };
-
         modal.style.display = 'flex';
         inputField.focus();
     },
-
     close: () => {
         document.getElementById('sys-modal').style.display = 'none';
     }
 };
-
 const State = {
     queue: [],
     students: [],
@@ -74,12 +59,10 @@ const State = {
     voiceEnabled: true,
     wakeLock: null
 };
-
 const SFX = {
     bell: new Audio('https://cdn.pixabay.com/audio/2021/08/04/audio_0625c1539c.mp3'),
     whistle: new Audio('https://cdn.pixabay.com/audio/2021/08/09/audio_00832bb584.mp3')
 };
-
 document.addEventListener('DOMContentLoaded', () => {
     if (localStorage.getItem('pib_students')) {
         State.students = JSON.parse(localStorage.getItem('pib_students'));
@@ -91,16 +74,18 @@ document.addEventListener('DOMContentLoaded', () => {
     SavedWorkouts.render();
     Students.render();
 });
-
 const Router = {
     go: (viewId) => {
         document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
         document.getElementById(`view-${viewId}`).classList.add('active');
         document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-        document.getElementById(`btn-nav-${viewId}`).classList.add('active');
+        const deskBtn = document.getElementById(`desk-btn-${viewId}`);
+        if (deskBtn) deskBtn.classList.add('active');
+        document.querySelectorAll('.btm-btn').forEach(btn => btn.classList.remove('active'));
+        const btmBtn = document.getElementById(`btm-btn-${viewId}`);
+        if (btmBtn) btmBtn.classList.add('active');
     }
 };
-
 const UI = {
     showDb: () => {
         document.getElementById('area-db').style.display = 'block';
@@ -120,12 +105,10 @@ const UI = {
         SavedWorkouts.render();
     }
 };
-
 function renderDatabase() {
     const list = document.getElementById('db-list');
     list.innerHTML = '';
     const filtered = EXERCISE_DB.filter(ex => (State.filter === 'all' || ex.type === State.filter) && ex.name.toLowerCase().includes(State.search.toLowerCase()));
-
     filtered.forEach(ex => {
         const div = document.createElement('div');
         div.className = `card type-${ex.type}`;
@@ -141,19 +124,16 @@ function renderDatabase() {
         list.appendChild(div);
     });
 }
-
 function setFilter(t) {
     State.filter = t;
     document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
     event.target.classList.add('active');
     renderDatabase();
 }
-
 function setSearch(v) {
     State.search = v;
     renderDatabase();
 }
-
 function addToQueue(ex) {
     State.queue.push({ ...ex, uid: Math.random() });
     updateTimeline();
@@ -162,7 +142,6 @@ function addToQueue(ex) {
         if (el) el.scrollTop = 10000;
     }, 50);
 }
-
 function addRest() {
     addToQueue({
         id: 'r_manual',
@@ -173,35 +152,29 @@ function addRest() {
         img: IMG.water
     });
 }
-
 function removeFromQueue(uid) {
     State.queue = State.queue.filter(i => i.uid !== uid);
     updateTimeline();
 }
-
 function clearQueue() {
     System.confirm('Deseja limpar toda a lista?', () => {
         State.queue = [];
         updateTimeline();
     });
 }
-
 function updateTimeline() {
     const list = document.getElementById('timeline-list');
     list.innerHTML = '';
     let totalSec = 0;
     if (State.queue.length === 0) list.innerHTML = '<div style="text-align:center; padding:30px; color:#666">Lista vazia.</div>';
-
     State.queue.forEach((ex, i) => {
         totalSec += ex.dur;
         const div = document.createElement('div');
         div.className = `card timeline-item type-${ex.type}`;
-
         let iconHtml = `<b>${i + 1}</b>`;
         if (ex.id === 'setup' || ex.id === 'explain_next') iconHtml = '<i class="fa-solid fa-chalkboard-user"></i>';
         if (ex.id === 'partner_switch') iconHtml = '<i class="fa-solid fa-people-arrows"></i>';
         if (ex.type === 'rest') iconHtml = '<i class="fa-solid fa-glass-water"></i>';
-
         div.innerHTML = `
             <div style="display:flex; align-items:center; gap:10px; flex:1">
                 <div class="timeline-idx" style="background:${ex.type === 'rest' ? '#fff' : 'var(--primary)'}; color:#000">${iconHtml}</div>
@@ -216,19 +189,16 @@ function updateTimeline() {
     });
     document.getElementById('total-time').innerText = `${Math.floor(totalSec / 60)} min`;
 }
-
 function generateWorkout() {
     const mode = document.getElementById('gen-mode').value;
     const totalTime = parseInt(document.getElementById('gen-time').value) * 60;
     let curTime = 0;
     State.queue = [];
-
     const getRnd = (t) => {
         const l = EXERCISE_DB.filter(e => e.type === t);
         if (l.length === 0) return EXERCISE_DB[0];
         return l[Math.floor(Math.random() * l.length)];
     };
-
     const rope = EXERCISE_DB.find(e => e.id === 'w01');
     if (rope) {
         State.queue.push({ ...rope, uid: Math.random() });
@@ -236,7 +206,6 @@ function generateWorkout() {
         if (r20) State.queue.push({ ...r20, uid: Math.random() });
         curTime += (rope.dur + 20);
     }
-
     const warmupLimit = totalTime * 0.15;
     while (curTime < warmupLimit) {
         const ex = getRnd('warmup');
@@ -247,50 +216,37 @@ function generateWorkout() {
             curTime += (ex.dur + 20);
         }
     }
-
     const techLimit = totalTime - 300;
     const setupCard = EXERCISE_DB.find(e => e.id === 'setup');
     const switchCard = EXERCISE_DB.find(e => e.id === 'partner_switch');
     const explainNext = EXERCISE_DB.find(e => e.id === 'explain_next');
     let isFirstTech = true;
-
     while (curTime < techLimit) {
         let type = 'tech';
         if (mode === 'cardio') type = Math.random() > 0.3 ? 'phys' : 'tech';
         if (mode === 'kids') type = 'fun';
-
         const baseEx = getRnd(type);
         const cycleCost = 1020;
-
         if ((curTime + cycleCost) <= techLimit + 120) {
-
             const explanation = isFirstTech ? setupCard : explainNext;
             State.queue.push({ ...explanation, uid: Math.random() });
-
             State.queue.push({ ...baseEx, name: `ALUNO A: ${baseEx.name}`, desc: `3 MIN: Base Destra.`, dur: 180, uid: Math.random() });
-            State.queue.push({ ...baseEx, name: `ALUNO A: ${baseEx.name}`, desc: `3 MIN: Base Canhota.`, dur: 180, uid: Math.random() });
-
+            State.queue.push({ ...baseEx, name: `ALUNO A: ${baseEx.name} (Troca)`, desc: `3 MIN: Base Canhota.`, dur: 180, uid: Math.random() });
             if (switchCard) State.queue.push({ ...switchCard, uid: Math.random() });
-
             State.queue.push({ ...baseEx, name: `ALUNO B: ${baseEx.name}`, desc: `3 MIN: Base Destra.`, dur: 180, uid: Math.random() });
-            State.queue.push({ ...baseEx, name: `ALUNO B: ${baseEx.name}`, desc: `3 MIN: Base Canhota.`, dur: 180, uid: Math.random() });
-
+            State.queue.push({ ...baseEx, name: `ALUNO B: ${baseEx.name} (Troca)`, desc: `3 MIN: Base Canhota.`, dur: 180, uid: Math.random() });
             const water = EXERCISE_DB.find(e => e.id === 'z1');
             if (water) State.queue.push({ ...water, uid: Math.random() });
-
             curTime += cycleCost;
             isFirstTech = false;
         } else {
             break;
         }
     }
-
     const cool = EXERCISE_DB.find(e => e.id === 'z2');
     if (cool) State.queue.push({ ...cool, uid: Math.random() });
-
     updateTimeline();
 }
-
 function shareToWhatsapp() {
     if (State.queue.length === 0) return System.show('Lista vazia!', 'error');
     let text = "*🥊 PIB MUAI THAY*\n\n";
@@ -305,16 +261,16 @@ function shareToWhatsapp() {
     const link = document.createElement('a');
     link.href = url;
     link.target = '_blank';
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
-
 const Player = {
     idx: 0,
     timer: null,
     timeLeft: 0,
     totalDur: 0,
     isRunning: false,
-
     open: () => {
         if (State.queue.length === 0) return System.show('A lista está vazia.', 'error');
         Player.idx = 0;
@@ -322,43 +278,34 @@ const Player = {
         try { if ('wakeLock' in navigator) navigator.wakeLock.request('screen'); } catch (e) { }
         Player.loadCard();
     },
-
     close: () => {
         Player.pause();
         document.getElementById('player').style.display = 'none';
         window.speechSynthesis.cancel();
     },
-
     toggle: () => {
         if (Player.isRunning) Player.pause();
         else Player.play();
     },
-
     play: () => {
         Player.isRunning = true;
         document.getElementById('btn-play-pause').innerHTML = '<i class="fa-solid fa-pause"></i>';
-
         if (Player.timer) clearInterval(Player.timer);
-
         Player.timer = setInterval(() => {
             if (Player.timeLeft > 0) {
                 Player.timeLeft--;
                 Player.updateDisplay();
-            }
-
-            if (Player.timeLeft <= 0) {
+            } else {
                 clearInterval(Player.timer);
                 Player.next();
             }
         }, 1000);
     },
-
     pause: () => {
         Player.isRunning = false;
         clearInterval(Player.timer);
         document.getElementById('btn-play-pause').innerHTML = '<i class="fa-solid fa-play"></i>';
     },
-
     next: () => {
         if (Player.idx < State.queue.length - 1) {
             Player.idx++;
@@ -370,23 +317,19 @@ const Player = {
             System.show('Treino Finalizado com Sucesso!');
         }
     },
-
     prev: () => {
         if (Player.idx > 0) {
             Player.idx--;
             Player.loadCard();
         }
     },
-
     loadCard: () => {
         const ex = State.queue[Player.idx];
         document.getElementById('p-title').innerText = ex.name;
         document.getElementById('p-desc').innerText = ex.desc;
         document.getElementById('p-round-count').innerText = `${Player.idx + 1}/${State.queue.length}`;
-
         const imgBox = document.getElementById('p-image-box');
         const iconBox = document.getElementById('p-icon-box');
-
         if (ex.img) {
             imgBox.style.display = 'block';
             iconBox.style.display = 'none';
@@ -395,23 +338,18 @@ const Player = {
             imgBox.style.display = 'none';
             iconBox.style.display = 'flex';
         }
-
         const isRest = ex.type === 'rest';
         const tag = document.getElementById('p-tag');
         tag.innerText = isRest ? "DESCANSO" : "TREINO";
         tag.style.background = isRest ? "#fff" : "var(--primary)";
-
         Player.speak(isRest ? "Descanso" : "Atenção: " + ex.name);
-
         if (isRest) SFX.whistle.play();
         else SFX.bell.play();
-
         Player.timeLeft = ex.dur;
         Player.totalDur = ex.dur;
         Player.updateDisplay();
         Player.pause();
     },
-
     updateDisplay: () => {
         const displayTime = Math.max(0, Player.timeLeft);
         const m = Math.floor(displayTime / 60);
@@ -419,7 +357,6 @@ const Player = {
         document.getElementById('p-timer').innerText = `${m}:${s < 10 ? '0' + s : s}`;
         document.getElementById('p-bar-fill').style.width = `${(displayTime / Player.totalDur) * 100}%`;
     },
-
     speak: (txt) => {
         if (State.voiceEnabled) {
             window.speechSynthesis.cancel();
@@ -430,30 +367,33 @@ const Player = {
         }
     }
 };
-
 function toggleVoice() {
     State.voiceEnabled = !State.voiceEnabled;
     const btn = document.getElementById('btn-voice');
+    const icon = document.getElementById('voice-icon');
+    const text = document.getElementById('voice-text');
     btn.style.opacity = State.voiceEnabled ? '1' : '0.4';
-    btn.innerHTML = State.voiceEnabled ? '<i class="fa-solid fa-volume-high"></i> Voz ON' : '<i class="fa-solid fa-volume-xmark"></i> Voz OFF';
+    if (State.voiceEnabled) {
+        icon.className = 'fa-solid fa-volume-high';
+        text.innerText = 'ON';
+    } else {
+        icon.className = 'fa-solid fa-volume-xmark';
+        text.innerText = 'OFF';
+    }
 }
-
 const Sparring = {
     timer: null,
     timeLeft: 0,
     state: 'rest',
     round: 0,
-
     start: () => {
         Sparring.round = 0;
         Sparring.next('fight');
         try { if ('wakeLock' in navigator) navigator.wakeLock.request('screen'); } catch (e) { }
     },
-
     next: (ph) => {
         Sparring.state = ph;
         const bg = document.getElementById('sp-bg');
-
         if (ph === 'fight') {
             Sparring.timeLeft = document.getElementById('sp-round').value;
             bg.className = 'sparring-display fighting';
@@ -469,15 +409,12 @@ const Sparring = {
         }
         Sparring.play();
     },
-
     toggle: () => {
         if (Sparring.timer) Sparring.pause();
         else Sparring.play();
     },
-
     play: () => {
         if (Sparring.timer) clearInterval(Sparring.timer);
-
         Sparring.timer = setInterval(() => {
             if (Sparring.timeLeft > 0) {
                 Sparring.timeLeft--;
@@ -485,18 +422,15 @@ const Sparring = {
                 const s = Sparring.timeLeft % 60;
                 document.getElementById('sp-timer').innerText = `${m}:${s < 10 ? '0' + s : s}`;
             }
-
             if (Sparring.timeLeft <= 0) {
                 Sparring.next(Sparring.state === 'fight' ? 'rest' : 'fight');
             }
         }, 1000);
     },
-
     pause: () => {
         clearInterval(Sparring.timer);
         Sparring.timer = null;
     },
-
     reset: () => {
         Sparring.pause();
         document.getElementById('sp-bg').className = 'sparring-display';
@@ -504,14 +438,12 @@ const Sparring = {
         document.getElementById('sp-status').innerText = 'PRONTO';
     }
 };
-
 const Students = {
     askName: () => {
         System.input('Nome do novo aluno:', (name) => {
             Students.add(name);
         });
     },
-
     add: (name) => {
         if (!name) return;
         State.students.push({
@@ -523,11 +455,9 @@ const Students = {
         Students.save();
         Students.render();
     },
-
     save: () => {
         localStorage.setItem('pib_students', JSON.stringify(State.students));
     },
-
     mark: (id) => {
         const s = State.students.find(x => x.id === id);
         if (s) {
@@ -538,7 +468,6 @@ const Students = {
             System.show(`Presença confirmada: ${s.name}`);
         }
     },
-
     del: (id) => {
         System.confirm('Excluir este aluno?', () => {
             State.students = State.students.filter(x => x.id !== id);
@@ -546,7 +475,6 @@ const Students = {
             Students.render();
         });
     },
-
     render: () => {
         const list = document.getElementById('students-list');
         list.innerHTML = '';
@@ -577,11 +505,9 @@ const Students = {
         });
     }
 };
-
 function calculateBelt(c) {
     return [...BELT_SYSTEM].reverse().find(b => c >= b.min) || BELT_SYSTEM[0];
 }
-
 const SavedWorkouts = {
     askName: () => {
         if (State.queue.length === 0) return System.show('A lista está vazia!', 'error');
@@ -589,14 +515,12 @@ const SavedWorkouts = {
             SavedWorkouts.save(name);
         });
     },
-
     save: (name) => {
         State.savedWorkouts[name] = State.queue;
         localStorage.setItem('pib_saved', JSON.stringify(State.savedWorkouts));
         System.show('Treino Salvo com Sucesso!');
         UI.showSaved();
     },
-
     load: (name) => {
         System.confirm(`Carregar o treino "${name}"?`, () => {
             State.queue = State.savedWorkouts[name];
@@ -604,7 +528,6 @@ const SavedWorkouts = {
             Router.go('workout');
         });
     },
-
     del: (name) => {
         System.confirm(`Apagar o treino "${name}"?`, () => {
             delete State.savedWorkouts[name];
@@ -612,7 +535,6 @@ const SavedWorkouts = {
             SavedWorkouts.render();
         });
     },
-
     render: () => {
         const list = document.getElementById('saved-list');
         list.innerHTML = '';
