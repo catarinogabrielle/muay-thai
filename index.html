@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PIB MUAI THAY v15</title>
+    <title>PIB MUAI THAY v27 FIX</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Teko:wght@600&display=swap"
         rel="stylesheet">
@@ -54,10 +54,9 @@
                             style="width:100%; margin-bottom:10px;">
                     </div>
                     <div id="area-saved" style="display:none;">
-                        <div style="display:flex; gap:5px;">
-                            <input type="text" id="save-name" placeholder="Nome do treino...">
-                            <button class="btn-action" onclick="SavedWorkouts.save()">SALVAR</button>
-                        </div>
+                        <button class="btn-action" onclick="SavedWorkouts.askName()" style="width:100%">
+                            <i class="fa-solid fa-floppy-disk"></i> SALVAR TREINO ATUAL
+                        </button>
                     </div>
                 </div>
                 <div id="db-list" class="panel-body"></div>
@@ -76,7 +75,7 @@
                                 class="fa-brands fa-whatsapp"></i></button>
                         <button onclick="addRest()" class="btn-icon water"><i
                                 class="fa-solid fa-glass-water"></i></button>
-                        <button class="btn-action" onclick="Player.open()" style="flex:1;">INICIAR AULA</button>
+                        <button class="btn-action" onclick="Player.open()" style="flex:1;">INICIAR</button>
                     </div>
                     <div style="margin-top:5px; font-size:0.8rem; color:#888;">Tempo: <span id="total-time"
                             style="color:#fff">0 min</span></div>
@@ -114,10 +113,9 @@
         <div id="view-students" class="view-section">
             <section class="panel full-width">
                 <div class="panel-head">
-                    <div style="display:flex; gap:10px;">
-                        <input type="text" id="new-student-name" placeholder="Nome do Aluno...">
-                        <button class="btn-action" onclick="Students.add()" style="width:auto;">CADASTRAR</button>
-                    </div>
+                    <button class="btn-action" onclick="Students.askName()" style="width:100%; max-width:300px;">
+                        <i class="fa-solid fa-user-plus"></i> NOVO ALUNO
+                    </button>
                 </div>
                 <div id="students-list" class="panel-body grid-list"></div>
             </section>
@@ -125,36 +123,46 @@
     </main>
 
     <div id="player" class="player-overlay">
-        <div style="width:100%; display:flex; justify-content:space-between; align-items:center; padding:15px;">
+        <div style="width:100%; display:flex; justify-content:space-between; padding:20px;">
             <div id="p-tag" class="p-phase">TREINO</div>
-            <div id="p-round-count" style="color:#888; font-weight:bold; font-size:1.2rem;">1/10</div>
+            <div id="p-round-count" style="color:#666; font-weight:bold;">--/--</div>
         </div>
-
-        <div class="p-visual-container">
+        <div id="p-visual" style="flex:1; display:flex; align-items:center; justify-content:center; width:100%;">
             <div id="p-image-box"></div>
-            <div id="p-icon-box" style="display:none;"> <i id="p-backup-icon" class="fa-solid fa-dumbbell"></i>
+            <div id="p-icon-box" style="display:none; font-size:5rem; color:#444;"><i class="fa-solid fa-dumbbell"></i>
             </div>
         </div>
-
         <h1 id="p-timer" class="p-timer">00:00</h1>
-        <div style="width:80%; max-width:400px; height:6px; background:#333; border-radius:5px; margin-bottom:15px;">
+        <div style="width:80%; height:8px; background:#333; border-radius:5px; margin-bottom:20px;">
             <div id="p-bar-fill" style="width:100%; height:100%; background:var(--primary); transition:width 1s linear">
             </div>
         </div>
-
-        <h2 id="p-title" class="p-title">Nome do Exercício</h2>
-        <p id="p-desc" class="p-desc">Descrição detalhada do movimento...</p>
-
+        <h2 id="p-title" class="p-title">...</h2>
+        <p id="p-desc" class="p-desc">...</p>
         <div class="p-controls">
             <button class="btn-round" onclick="Player.prev()"><i class="fa-solid fa-backward"></i></button>
-            <button class="btn-round btn-main" onclick="Player.toggle()" id="btn-play-pause">
-                <i class="fa-solid fa-play"></i>
-            </button>
+            <button class="btn-round btn-main" onclick="Player.toggle()" id="btn-play-pause"><i
+                    class="fa-solid fa-play"></i></button>
             <button class="btn-round" onclick="Player.next()"><i class="fa-solid fa-forward"></i></button>
         </div>
-
         <button onclick="Player.close()"
-            style="margin-top:20px; background:none; border:1px solid #333; color:#666; padding:8px 25px; border-radius:30px; font-size:0.8rem;">SAIR</button>
+            style="margin-top:30px; background:none; border:1px solid #333; color:#888; padding:10px 30px; border-radius:30px;">SAIR</button>
+    </div>
+
+    <div id="sys-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-icon"><i class="fa-solid fa-circle-info"></i></div>
+            <h3 id="sys-modal-title">Título</h3>
+            <p id="sys-modal-msg">Mensagem...</p>
+
+            <input type="text" id="sys-modal-input" class="modal-input" placeholder="Digite aqui..."
+                style="display:none;">
+
+            <div class="modal-actions">
+                <button id="sys-btn-cancel" class="btn-ghost" onclick="System.close()">Cancelar</button>
+                <button id="sys-btn-ok" class="btn-action">OK</button>
+            </div>
+        </div>
     </div>
 
     <script src="database.js"></script>
