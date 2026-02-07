@@ -95,7 +95,7 @@ main {
   width: 100%;
   padding: 15px;
   box-sizing: border-box;
-  grid-template-columns: 350px 1fr;
+  grid-template-columns: 500px 1fr;
   gap: 15px;
 }
 .view-section.active {
@@ -362,6 +362,7 @@ select {
   text-align: center;
   border: 1px solid #333;
   width: 100%;
+  height: max-content;
   box-sizing: border-box;
 }
 .student-belt {
