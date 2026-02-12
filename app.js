@@ -123,6 +123,32 @@ function shareToWhatsapp() {
     }
 };
 
+function clearQueue() {
+    System.confirm('Deseja limpar toda a lista do cronograma?', () => {
+        State.queue = [];
+
+        updateTimeline();
+
+        const totalTimeEl = document.getElementById('total-time');
+        if (totalTimeEl) {
+            totalTimeEl.innerText = '0 min';
+        }
+
+        System.show('Cronograma limpo com sucesso!');
+    });
+};
+
+function addRest() {
+    addToQueue({
+        id: 'r_manual',
+        type: 'rest',
+        name: 'Pausa Água',
+        dur: 60,
+        desc: 'Hidratação.',
+        img: 'https://media.tenor.com/images/4d7159676e9a676b7012558550181518/tenor.gif'
+    });
+}
+
 const Player = {
     idx: 0,
     timer: null,
@@ -131,24 +157,17 @@ const Player = {
     isRunning: false,
 
     open: () => {
-        if (State.queue.length === 0) return System.show('Adicione exercícios ao cronograma!', 'error');
+        if (State.queue.length === 0) return System.show('A lista está vazia. Adicione exercícios ao cronograma!', 'error');
 
         const mainNav = document.getElementById('main-nav') || document.querySelector('.bottom-nav');
-        const mainHeader = document.getElementById('main-header') || document.querySelector('header');
-
         if (mainNav) mainNav.style.display = 'none';
+
+        const mainHeader = document.getElementById('main-header') || document.querySelector('header');
         if (mainHeader) mainHeader.style.display = 'none';
 
-        const playerEl = document.getElementById('player');
-        if (playerEl) {
-            playerEl.style.display = 'flex';
-            Player.idx = 0;
-            Player.loadCard();
-
-            setTimeout(() => {
-                Player.play();
-            }, 300);
-        }
+        document.getElementById('player').style.display = 'flex';
+        Player.idx = 0;
+        Player.loadCard();
     },
 
     close: () => {
@@ -392,6 +411,14 @@ function updateTimeline() {
     if (!list) return;
     list.innerHTML = '';
     let totalSec = 0;
+
+    if (State.queue.length === 0) {
+        list.innerHTML = '<div style="text-align:center; padding:30px; color:#666">Nenhum exercício adicionado.</div>';
+        const totalTimeEl = document.getElementById('total-time');
+        if (totalTimeEl) totalTimeEl.innerText = '0 min';
+        return;
+    }
+
     State.queue.forEach((ex, i) => {
         totalSec += ex.dur;
         const div = document.createElement('div');
