@@ -194,6 +194,8 @@ const Player = {
     },
 
     next: () => {
+        if (Player.timer) clearInterval(Player.timer);
+
         if (Player.idx < State.queue.length - 1) {
             Player.idx++;
             Player.loadCard();
@@ -202,6 +204,19 @@ const Player = {
             Player.close();
             SFX.bell.play();
             System.show('Treino Finalizado!', 'success');
+        }
+    },
+
+    prev: () => {
+        if (Player.timer) clearInterval(Player.timer);
+
+        if (Player.idx > 0) {
+            Player.idx--;
+            Player.loadCard();
+            Player.play();
+        } else {
+            Player.loadCard();
+            Player.play();
         }
     },
 
@@ -429,7 +444,6 @@ const Students = {
             const beltIdx = BELT_SYSTEM.indexOf(currentBelt);
             const nextBelt = BELT_SYSTEM[beltIdx + 1];
 
-            // Cálculo de progresso para a próxima faixa
             let progress = 100;
             if (nextBelt) {
                 const range = nextBelt.min - currentBelt.min;
