@@ -82,6 +82,47 @@ const Router = {
     }
 };
 
+function shareToWhatsapp() {
+    if (State.queue.length === 0) return System.show('Lista vazia!', 'error');
+
+    let text = "*🥊 PIB MUAY THAI - TREINO DO DIA*\n";
+    text += "__________________________\n\n";
+
+    let exercicioCount = 1;
+
+    State.queue.forEach((ex) => {
+        const timeStr = ex.dur >= 60 ? Math.floor(ex.dur / 60) + 'm' : ex.dur + 's';
+
+        if (ex.id === 'setup' || ex.id === 'explain_next') {
+            text += `\n*LIGUE O SOM:* 📢 ${ex.name} (${timeStr})\n`;
+        } else if (ex.id === 'partner_switch') {
+            text += `\n*TROCA:* 🔄 ${ex.name} (${timeStr})\n`;
+        } else if (ex.type === 'rest') {
+            text += `*PAUSA:* 💧 ${ex.name} (${timeStr})\n`;
+        } else {
+            text += `${exercicioCount}. *${ex.name}* - ${timeStr}\n`;
+            exercicioCount++;
+        }
+    });
+
+    text += "\n__________________________\n";
+    text += "*Bora treinar!* 🔥";
+
+    const encodedText = encodeURIComponent(text);
+    const whatsappUrl = `https://wa.me/?text=${encodedText}`;
+
+    try {
+        window.open(whatsappUrl, '_blank');
+    } catch (e) {
+        const link = document.createElement('a');
+        link.href = whatsappUrl;
+        link.setAttribute('target', '_blank');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+};
+
 const Player = {
     idx: 0,
     timer: null,
