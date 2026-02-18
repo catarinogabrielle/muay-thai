@@ -4,191 +4,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PIB MUAY THAI APP</title>
+    <title>MUAY THAI STUDIO</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Teko:wght@600&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Teko:wght@600&display=swap"
         rel="stylesheet">
+    <link rel="icon" type="image/png" href="icon.png">
     <link rel="stylesheet" href="style.css">
-    <link rel="shortcut icon" href="icon.png" type="image/x-icon">
 </head>
 
 <body>
     <header>
-        <div class="brand"><i class="fa-solid fa-fire-flame-curved"></i> PIB MUAY THAI</div>
-
-        <nav class="desktop-nav">
-            <button onclick="Router.go('workout')" class="nav-btn active" id="desk-btn-workout">AULA</button>
-            <button onclick="Router.go('sparring')" class="nav-btn" id="desk-btn-sparring">LUTA</button>
-            <button onclick="Router.go('students')" class="nav-btn" id="desk-btn-students">ALUNOS</button>
-        </nav>
-
-        <div class="header-right">
-            <button id="btn-voice" onclick="toggleVoice()" class="voice-btn">
-                <i id="voice-icon" class="fa-solid fa-volume-high"></i>
-                <span id="voice-text">ON</span>
-            </button>
-        </div>
+        <div class="brand"><i class="fa-solid fa-fire-flame-curved"></i> MUAY THAI STUDIO</div>
+        <button id="btn-voice" onclick="toggleVoice()" class="voice-btn">
+            <i id="voice-icon" class="fa-solid fa-volume-xmark"></i>
+        </button>
     </header>
 
-    <main>
-        <div id="view-workout" class="view-section active">
-            <section class="panel">
-                <div class="panel-head">
-                    <div class="tab-header">
-                        <button onclick="UI.showDb()" class="sub-tab active" id="tab-db">Exercícios</button>
-                        <button onclick="UI.showSaved()" class="sub-tab" id="tab-saved">Salvos</button>
-                    </div>
-                    <div id="area-db">
-                        <div class="generator">
-                            <select id="gen-mode">
-                                <option value="mix">Foco: Misto</option>
-                                <option value="tech">Foco: Técnica</option>
-                                <option value="cardio">Foco: Cardio</option>
-                                <option value="kids">Foco: Kids</option>
-                            </select>
-                            <select id="gen-time">
-                                <option value="30">30 Min</option>
-                                <option value="45">45 Min</option>
-                                <option value="50" selected>50 Min</option>
-                            </select>
-                            <button class="btn-action" onclick="generateWorkout()">GERAR</button>
-                        </div>
-                        <input type="text" placeholder="Buscar..." onkeyup="setSearch(this.value)"
-                            style="width:100%; margin-bottom:10px;">
-                    </div>
-                    <div id="area-saved" style="display:none;">
-                        <button class="btn-action" onclick="SavedWorkouts.askName()" style="width:100%">
-                            <i class="fa-solid fa-floppy-disk"></i> SALVAR TREINO
-                        </button>
-                    </div>
-                </div>
-                <div id="db-list" class="panel-body"></div>
-                <div id="saved-list" class="panel-body" style="display:none;"></div>
-            </section>
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="struct-grid">
+                <button class="btn-struct warmup" onclick="openWarmupModal()">
+                    <i class="fa-solid fa-person-running"></i> AQUECIMENTO
+                </button>
+                <button class="btn-struct water" onclick="addStructure('water')">
+                    <i class="fa-solid fa-glass-water"></i> ÁGUA
+                </button>
+                <button class="btn-struct phys" onclick="openPhysModal()">
+                    <i class="fa-solid fa-dumbbell"></i> FÍSICO
+                </button>
+                <button class="btn-struct preparation" onclick="addStructure('preparation')">
+                    <i class="fa-solid fa-chalkboard-user"></i> PREPARAÇÃO
+                </button>
+            </div>
 
-            <section class="panel">
-                <div class="panel-head">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h3 style="color:var(--primary); margin:0;">CRONOGRAMA</h3>
-                        <button onclick="clearQueue()"
-                            style="background:none; border:none; color:#ff4757; cursor:pointer; padding:5px;">Limpar</button>
-                    </div>
-                    <div style="display:flex; gap:10px; margin-top:10px;">
-                        <button onclick="shareToWhatsapp()" class="btn-icon whatsapp"><i
-                                class="fa-brands fa-whatsapp"></i></button>
-                        <button onclick="addRest()" class="btn-icon water"><i
-                                class="fa-solid fa-glass-water"></i></button>
-                        <button class="btn-action" onclick="Player.open()" style="flex:1;">INICIAR</button>
-                    </div>
-                    <div style="margin-top:5px; font-size:0.8rem; color:#888;">Tempo Estimado: <span id="total-time"
-                            style="color:#fff">0 min</span></div>
+            <div class="combo-area">
+                <div class="combo-header">
+                    <span>Sequência Atual:</span>
+                    <button onclick="clearCombo()"
+                        style="background:none; border:none; color:#ff4757; cursor:pointer;"><i
+                            class="fa-solid fa-eraser"></i></button>
                 </div>
-                <div id="timeline-list" class="panel-body"></div>
-            </section>
-        </div>
+                <div id="combo-display" class="combo-display empty">Selecione as técnicas abaixo...</div>
+                <button class="btn-add" onclick="submitCombo()">Adicionar ao Treino</button>
+            </div>
 
-        <div id="view-sparring" class="view-section">
-            <div class="sparring-container">
-                <div class="sparring-setup">
-                    <label>Round: <select id="sp-round">
-                            <option value="120">2 min</option>
-                            <option value="180" selected>3 min</option>
-                            <option value="300">5 min</option>
-                        </select></label>
-                    <label>Descanso: <select id="sp-rest">
-                            <option value="30">30s</option>
-                            <option value="60" selected>1 min</option>
-                        </select></label>
-                    <button class="btn-action" onclick="Sparring.start()">COMEÇAR</button>
-                </div>
-                <div class="sparring-display" id="sp-bg">
-                    <div id="sp-status">PRONTO</div>
-                    <div id="sp-timer">00:00</div>
-                    <div id="sp-round-counter">Round 1</div>
-                    <div class="sp-controls">
-                        <button onclick="Sparring.toggle()"><i class="fa-solid fa-play"></i></button>
-                        <button onclick="Sparring.reset()"><i class="fa-solid fa-stop"></i></button>
-                    </div>
-                </div>
+            <div class="tabs">
+                <button class="tab-btn active" onclick="loadTab('hands')">MÃOS</button>
+                <button class="tab-btn" onclick="loadTab('legs')">PERNAS</button>
+                <button class="tab-btn" onclick="loadTab('def')">DEFESA</button>
+            </div>
+
+            <div class="tech-container">
+                <div id="tech-grid" class="tech-grid"></div>
             </div>
         </div>
 
-        <div id="view-students" class="view-section">
-            <section class="panel full-width">
-                <div class="panel-head">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                        <h3 style="color:#fff; margin:0;">Gestão de Alunos</h3>
-                    </div>
-                    <button class="btn-action" onclick="Students.askName()"
-                        style="width:100%; display:flex; justify-content:center; align-items:center; gap:10px;">
-                        <i class="fa-solid fa-user-plus"></i> CADASTRAR NOVO ALUNO
-                    </button>
+        <div class="content">
+            <div class="panel-head">
+                <div class="head-info">
+                    <h2>CRONOGRAMA</h2>
+                    <span id="total-time">0 min</span>
                 </div>
-                <div id="students-list" class="panel-body grid-list"></div>
-            </section>
-        </div>
-    </main>
-
-    <nav class="bottom-nav">
-        <button onclick="Router.go('workout')" class="btm-btn active" id="btm-btn-workout">
-            <i class="fa-solid fa-dumbbell"></i>
-            <span>AULA</span>
-        </button>
-        <button onclick="Router.go('sparring')" class="btm-btn" id="btm-btn-sparring">
-            <i class="fa-solid fa-stopwatch"></i>
-            <span>LUTA</span>
-        </button>
-        <button onclick="Router.go('students')" class="btm-btn" id="btm-btn-students">
-            <i class="fa-solid fa-users"></i>
-            <span>ALUNOS</span>
-        </button>
-    </nav>
-
-    <div id="player" class="player-overlay">
-        <div style="width:100%; display:flex; justify-content:space-between; padding:20px; z-index:2;">
-            <div id="p-tag" class="p-phase">TREINO</div>
-            <div id="p-round-count" style="color:#666; font-weight:bold;">--/--</div>
-        </div>
-        <div id="p-visual"
-            style="flex:1; display:flex; align-items:center; justify-content:center; width:100%; overflow:hidden;">
-            <div id="p-image-box"></div>
-            <div id="p-icon-box" style="display:none; font-size:5rem; color:#444;"><i class="fa-solid fa-dumbbell"></i>
+                <div class="head-actions">
+                    <button class="btn-tool btn-whatsapp" onclick="shareToWhatsapp()"><i
+                            class="fa-brands fa-whatsapp"></i></button>
+                    <button class="btn-tool btn-clear" onclick="clearQueue()"><i class="fa-solid fa-trash"></i></button>
+                    <button class="btn-start" onclick="Player.open()">INICIAR</button>
+                </div>
+            </div>
+            <div id="timeline" class="timeline">
+                <div class="empty-msg">O treino está vazio.</div>
             </div>
         </div>
-        <div style="z-index:2; width:100%; display:flex; flex-direction:column; align-items:center;">
+    </div>
+
+    <div id="player-modal" class="overlay">
+        <div class="modal player-box">
+            <div id="p-tag" class="p-tag">TREINO</div>
             <h1 id="p-timer" class="p-timer">00:00</h1>
-            <div style="width:80%; height:8px; background:#333; border-radius:5px; margin-bottom:20px;">
-                <div id="p-bar-fill"
-                    style="width:100%; height:100%; background:var(--primary); transition:width 1s linear"></div>
-            </div>
             <h2 id="p-title" class="p-title">...</h2>
-            <p id="p-desc" class="p-desc">...</p>
+            <div
+                style="width:100%; height:8px; background:#333; margin-bottom:30px; border-radius:4px; overflow:hidden;">
+                <div id="p-bar" style="width:0%; height:100%; background:#ffd700; transition:width 1s linear;"></div>
+            </div>
             <div class="p-controls">
-                <button class="btn-round" onclick="Player.prev()"><i class="fa-solid fa-backward"></i></button>
-                <button class="btn-round btn-main" onclick="Player.toggle()" id="btn-play-pause"><i
+                <button class="p-btn" onclick="Player.prev()"><i class="fa-solid fa-backward-step"></i></button>
+                <button class="p-btn play" onclick="Player.toggle()" id="p-play-btn"><i
                         class="fa-solid fa-play"></i></button>
-                <button class="btn-round" onclick="Player.next()"><i class="fa-solid fa-forward"></i></button>
+                <button class="p-btn" onclick="Player.next()"><i class="fa-solid fa-forward-step"></i></button>
             </div>
-            <button onclick="Player.close()"
-                style="margin-top:20px; background:none; border:1px solid #333; color:#888; padding:10px 30px; border-radius:30px;">SAIR</button>
+            <button class="p-exit" onclick="Player.close()">SAIR</button>
         </div>
     </div>
 
-    <div id="sys-modal" class="modal-overlay">
-        <div class="modal-box">
-            <div class="modal-icon"><i class="fa-solid fa-circle-info"></i></div>
-            <h3 id="sys-modal-title">Título</h3>
-            <p id="sys-modal-msg">Mensagem...</p>
-            <input type="text" id="sys-modal-input" class="modal-input" placeholder="Digite aqui..."
-                style="display:none;">
-            <div class="modal-actions">
-                <button id="sys-btn-cancel" class="btn-ghost" onclick="System.close()">Cancelar</button>
-                <button id="sys-btn-ok" class="btn-action">OK</button>
+    <div id="warmup-modal" class="overlay">
+        <div class="modal modal-wide">
+            <h3 style="color:#ff9f43; margin-bottom:15px; text-transform: uppercase;">AQUECIMENTO</h3>
+            <select id="warmup-time" class="phys-time">
+                <option value="60">1 Minuto</option>
+                <option value="120">2 Minutos</option>
+                <option value="180" selected>3 Minutos</option>
+                <option value="300">5 Minutos</option>
+                <option value="600">10 Minutos</option>
+            </select>
+            <div id="warmup-list" class="phys-list"></div>
+            <div class="sys-btn-group">
+                <button class="sys-btn cancel" onclick="closeWarmupModal()">Cancelar</button>
+                <button class="sys-btn confirm" style="background:#ff9f43; color:#000;"
+                    onclick="addWarmupExercises()">Adicionar</button>
             </div>
         </div>
     </div>
 
-    <script src="database.js"></script>
+    <div id="phys-modal" class="overlay">
+        <div class="modal modal-wide">
+            <h3 style="color:#eb4d4b; margin-bottom:15px; text-transform: uppercase;">Exercícios Físicos</h3>
+            <select id="phys-time" class="phys-time">
+                <option value="30">30 Segundos</option>
+                <option value="45">45 Segundos</option>
+                <option value="60" selected>1 Minuto</option>
+                <option value="90">1 Min 30s</option>
+            </select>
+            <div id="phys-list" class="phys-list"></div>
+            <div class="sys-btn-group">
+                <button class="sys-btn cancel" onclick="closePhysModal()">Cancelar</button>
+                <button class="sys-btn confirm" style="background:#eb4d4b; color:#fff;"
+                    onclick="addPhysExercises()">Adicionar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="sys-modal" class="overlay">
+        <div class="modal" style="max-width:350px;">
+            <h3 id="sys-msg" style="color:#fff; margin-bottom:25px; font-size: 1.2rem;">Mensagem</h3>
+            <div class="sys-btn-group">
+                <button id="sys-cancel" class="sys-btn cancel" style="display:none;"
+                    onclick="System.close()">Cancelar</button>
+                <button id="sys-ok" class="sys-btn confirm">OK</button>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 

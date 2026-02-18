@@ -1,539 +1,369 @@
-const State = {
-    queue: [],
-    students: [],
-    savedWorkouts: {},
-    filter: 'all',
-    search: '',
-    voiceEnabled: true,
-    wakeLock: null
+const DB = {
+    hands: ['Jab', 'Direto', 'Cruzado', 'Uppercut', 'Soco Giratório', 'Cotovelo Circular', 'Cotovelo Descendente', 'Cotovelo Ascendente', 'Cotovelo Giratório', 'Cotovelo Frontal', 'Clinche (Trava Dupla)', 'Clinche (Trava Simples)', 'Soco em salto', 'Esgrima', 'Controle de Braço/Cotovelo', 'Clinche (De Lado)', 'Desequilíbrios e Projeções'],
+    legs: ['Low Kick', 'Mid Kick', 'High Kick', 'Joelhada Direta', 'Joelhada Lateral', 'Joelhada em Clinche', 'Joelhada Voadora', 'Step', 'Teep da Perna da Frente', 'Teep da Perna de Trás', 'Teep com Step', 'Teep Falso (Finta)', 'Teep Lateral'],
+    def: ['Bloqueio de Canela', 'Bloqueio de Chute Alto', 'Lean Back (Recuo de Tronco)', 'Dump / Esquiva de Soco', 'Pivot (Rotação de Quadril)', 'Passo atrás', 'Pêndulo', 'Toreada', 'Catada de Chute', 'Saída Lateral', 'Teep de Bloqueio', 'Bloqueio de Chute Frontal', 'Bloqueio de Cruzado/Gancho', 'Bloqueio de Soco Direto', 'Deslizamento (Footwork)']
 };
 
-const SFX = {
+const PHYS_DB = [
+    'Abdominal Remador', 'Abdominal Supra', 'Abdominal Infra', 'Prancha Isométrica',
+    'Flexão de Braço', 'Agachamento', 'Polichinelo', 'Burpee', 'Afundo', 'Mountain Climber'
+];
+
+const WARMUP_DB = [
+    'Pular Corda', 'Corrida', 'Polichinelo', 'Corrida Joelho Alto',
+    'Agachamento com pulo', 'Sprawl', 'Burpee'
+];
+
+const SOUNDS = {
     bell: new Audio('https://cdn.pixabay.com/audio/2021/08/04/audio_0625c1539c.mp3'),
-    whistle: new Audio('https://cdn.pixabay.com/audio/2021/08/09/audio_00832bb584.mp3')
+    alert: new Audio('https://cdn.pixabay.com/audio/2022/03/15/audio_7314787167.mp3')
 };
 
-const System = {
-    show: (msg, type = 'info') => {
-        const modal = document.getElementById('sys-modal');
-        if (!modal) return alert(msg);
-        document.getElementById('sys-modal-title').innerText = type === 'error' ? 'Erro' : 'Aviso';
-        document.getElementById('sys-modal-msg').innerText = msg;
-        document.getElementById('sys-modal-input').style.display = 'none';
-        document.getElementById('sys-btn-cancel').style.display = 'none';
-        const btnOk = document.getElementById('sys-btn-ok');
-        btnOk.innerText = 'OK';
-        btnOk.onclick = () => System.close();
-        modal.style.display = 'flex';
-    },
-    confirm: (msg, onConfirm) => {
-        const modal = document.getElementById('sys-modal');
-        if (!modal) return confirm(msg) && onConfirm();
-        document.getElementById('sys-modal-title').innerText = 'Confirmação';
-        document.getElementById('sys-modal-msg').innerText = msg;
-        document.getElementById('sys-modal-input').style.display = 'none';
-        document.getElementById('sys-btn-cancel').style.display = 'block';
-        const btnOk = document.getElementById('sys-btn-ok');
-        btnOk.innerText = 'CONFIRMAR';
-        btnOk.onclick = () => { System.close(); onConfirm(); };
-        modal.style.display = 'flex';
-    },
-    input: (msg, onConfirm) => {
-        const modal = document.getElementById('sys-modal');
-        const inputField = document.getElementById('sys-modal-input');
-        document.getElementById('sys-modal-title').innerText = 'Digitar';
-        document.getElementById('sys-modal-msg').innerText = msg;
-        inputField.style.display = 'block';
-        inputField.value = '';
-        document.getElementById('sys-btn-cancel').style.display = 'block';
-        const btnOk = document.getElementById('sys-btn-ok');
-        btnOk.innerText = 'SALVAR';
-        btnOk.onclick = () => {
-            const val = inputField.value.trim();
-            if (val) { System.close(); onConfirm(val); }
-        };
-        modal.style.display = 'flex';
-        inputField.focus();
-    },
-    close: () => {
-        const modal = document.getElementById('sys-modal');
-        if (modal) modal.style.display = 'none';
-    }
-};
-
-const Router = {
-    go: (viewId) => {
-        document.querySelectorAll('.view-section').forEach(el => {
-            el.classList.remove('active');
-            el.style.display = 'none';
-        });
-
-        const target = document.getElementById(`view-${viewId}`);
-        if (target) {
-            target.classList.add('active');
-            target.style.display = (window.innerWidth <= 768 && viewId === 'workout') ? 'flex' : 'grid';
-        }
-
-        document.querySelectorAll('.nav-btn, .btm-btn').forEach(btn => btn.classList.remove('active'));
-        const dBtn = document.getElementById(`desk-btn-${viewId}`);
-        const bBtn = document.getElementById(`btm-btn-${viewId}`);
-        if (dBtn) dBtn.classList.add('active');
-        if (bBtn) bBtn.classList.add('active');
-    }
-};
-
-function shareToWhatsapp() {
-    if (State.queue.length === 0) return System.show('Lista vazia!', 'error');
-
-    let text = "*🥊 PIB MUAY THAI - TREINO DO DIA*\n";
-    text += "__________________________\n\n";
-
-    let exercicioCount = 1;
-
-    State.queue.forEach((ex) => {
-        const timeStr = ex.dur >= 60 ? Math.floor(ex.dur / 60) + 'm' : ex.dur + 's';
-
-        if (ex.id === 'setup' || ex.id === 'explain_next') {
-            text += `\n*LIGUE O SOM:* 📢 ${ex.name} (${timeStr})\n`;
-        } else if (ex.id === 'partner_switch') {
-            text += `\n*TROCA:* 🔄 ${ex.name} (${timeStr})\n`;
-        } else if (ex.type === 'rest') {
-            text += `*PAUSA:* 💧 ${ex.name} (${timeStr})\n`;
-        } else {
-            text += `${exercicioCount}. *${ex.name}* - ${timeStr}\n`;
-            exercicioCount++;
-        }
-    });
-
-    text += "\n__________________________\n";
-    text += "*Bora treinar!* 🔥";
-
-    const encodedText = encodeURIComponent(text);
-    const whatsappUrl = `https://wa.me/?text=${encodedText}`;
-
-    try {
-        window.open(whatsappUrl, '_blank');
-    } catch (e) {
-        const link = document.createElement('a');
-        link.href = whatsappUrl;
-        link.setAttribute('target', '_blank');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-};
-
-function clearQueue() {
-    System.confirm('Deseja limpar toda a lista do cronograma?', () => {
-        State.queue = [];
-
-        updateTimeline();
-
-        const totalTimeEl = document.getElementById('total-time');
-        if (totalTimeEl) {
-            totalTimeEl.innerText = '0 min';
-        }
-
-        System.show('Cronograma limpo com sucesso!');
-    });
-};
-
-function addRest() {
-    addToQueue({
-        id: 'r_manual',
-        type: 'rest',
-        name: 'Pausa Água',
-        dur: 60,
-        desc: 'Hidratação.',
-        img: 'https://media.tenor.com/images/4d7159676e9a676b7012558550181518/tenor.gif'
-    });
-}
-
-const Player = {
-    idx: 0,
-    timer: null,
-    timeLeft: 0,
-    totalDur: 0,
-    isRunning: false,
-
-    open: () => {
-        if (State.queue.length === 0) return System.show('A lista está vazia. Adicione exercícios ao cronograma!', 'error');
-
-        const mainNav = document.getElementById('main-nav') || document.querySelector('.bottom-nav');
-        if (mainNav) mainNav.style.display = 'none';
-
-        const mainHeader = document.getElementById('main-header') || document.querySelector('header');
-        if (mainHeader) mainHeader.style.display = 'none';
-
-        document.getElementById('player').style.display = 'flex';
-        Player.idx = 0;
-        Player.loadCard();
-    },
-
-    close: () => {
-        Player.pause();
-        const playerEl = document.getElementById('player');
-        if (playerEl) playerEl.style.display = 'none';
-
-        const mainNav = document.getElementById('main-nav') || document.querySelector('.bottom-nav');
-        const mainHeader = document.getElementById('main-header') || document.querySelector('header');
-
-        if (mainNav && window.innerWidth <= 768) mainNav.style.display = 'flex';
-        if (mainHeader) mainHeader.style.display = 'flex';
-
-        window.speechSynthesis.cancel();
-    },
-
-    toggle: () => Player.isRunning ? Player.pause() : Player.play(),
-
-    play: () => {
-        if (Player.timer) clearInterval(Player.timer);
-        Player.isRunning = true;
-
-        const btn = document.getElementById('btn-play-pause');
-        if (btn) btn.innerHTML = '<i class="fa-solid fa-pause"></i>';
-
-        Player.timer = setInterval(() => {
-            if (Player.timeLeft > 0) {
-                Player.timeLeft--;
-                Player.updateDisplay();
-            } else {
-                clearInterval(Player.timer);
-                Player.next();
-            }
-        }, 1000);
-    },
-
-    pause: () => {
-        Player.isRunning = false;
-        clearInterval(Player.timer);
-
-        const btn = document.getElementById('btn-play-pause');
-        if (btn) btn.innerHTML = '<i class="fa-solid fa-play"></i>';
-    },
-
-    next: () => {
-        if (Player.timer) clearInterval(Player.timer);
-
-        if (Player.idx < State.queue.length - 1) {
-            Player.idx++;
-            Player.loadCard();
-            Player.play();
-        } else {
-            Player.close();
-            SFX.bell.play();
-            System.show('Treino Finalizado!', 'success');
-        }
-    },
-
-    prev: () => {
-        if (Player.timer) clearInterval(Player.timer);
-
-        if (Player.idx > 0) {
-            Player.idx--;
-            Player.loadCard();
-            Player.play();
-        } else {
-            Player.loadCard();
-            Player.play();
-        }
-    },
-
-    loadCard: () => {
-        const ex = State.queue[Player.idx];
-        const title = document.getElementById('p-title');
-        const desc = document.getElementById('p-desc');
-        const count = document.getElementById('p-round-count');
-        const tag = document.getElementById('p-tag');
-
-        if (title) title.innerText = ex.name;
-        if (desc) desc.innerText = ex.desc;
-        if (count) count.innerText = `${Player.idx + 1}/${State.queue.length}`;
-
-        const isRest = ex.type === 'rest';
-        if (tag) {
-            tag.innerText = isRest ? "DESCANSO" : "TREINO";
-            tag.style.background = isRest ? "#fff" : "var(--primary)";
-        }
-
-        if (State.voiceEnabled) {
-            window.speechSynthesis.cancel();
-            const u = new SpeechSynthesisUtterance(isRest ? "Descanso" : ex.name);
-            u.lang = 'pt-BR';
-            window.speechSynthesis.speak(u);
-        }
-
-        Player.timeLeft = ex.dur;
-        Player.totalDur = ex.dur;
-        Player.updateDisplay();
-    },
-
-    updateDisplay: () => {
-        const timerEl = document.getElementById('p-timer');
-        const barEl = document.getElementById('p-bar-fill');
-        const m = Math.floor(Player.timeLeft / 60);
-        const s = Player.timeLeft % 60;
-        if (timerEl) timerEl.innerText = `${m}:${s < 10 ? '0' + s : s}`;
-        if (barEl) barEl.style.width = `${(Player.timeLeft / Player.totalDur) * 100}%`;
-    }
-};
-
-const Sparring = {
-    timer: null,
-    timeLeft: 0,
-    state: 'ready',
-    round: 0,
-
-    start: () => {
-        Sparring.round = 0;
-        Sparring.next('fight');
-
-        const playBtn = document.querySelector('.sp-controls button:first-child');
-        if (playBtn) playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
-
-        if ('wakeLock' in navigator) navigator.wakeLock.request('screen').catch(() => { });
-    },
-
-    next: (ph) => {
-        Sparring.state = ph;
-        const bg = document.getElementById('sp-bg');
-        if (ph === 'fight') {
-            Sparring.timeLeft = parseInt(document.getElementById('sp-round').value);
-            if (bg) bg.className = 'sparring-display fighting';
-            Sparring.round++;
-            document.getElementById('sp-round-counter').innerText = `Round ${Sparring.round}`;
-            document.getElementById('sp-status').innerText = "LUTAR!";
-            SFX.bell.play();
-        } else {
-            Sparring.timeLeft = parseInt(document.getElementById('sp-rest').value);
-            if (bg) bg.className = 'sparring-display resting';
-            document.getElementById('sp-status').innerText = "DESCANSO";
-            SFX.whistle.play();
-        }
-        Sparring.play();
-    },
-
-    toggle: () => {
-        const playBtn = document.querySelector('.sp-controls button:first-child');
-        if (Sparring.timer) {
-            Sparring.pause();
-            if (playBtn) playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
-        } else {
-            Sparring.play();
-            if (playBtn) playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
-        }
-    },
-
-    play: () => {
-        if (Sparring.timer) clearInterval(Sparring.timer);
-        Sparring.timer = setInterval(() => {
-            if (Sparring.timeLeft > 0) {
-                Sparring.timeLeft--;
-                const m = Math.floor(Sparring.timeLeft / 60);
-                const s = Sparring.timeLeft % 60;
-                document.getElementById('sp-timer').innerText = `${m}:${s < 10 ? '0' + s : s}`;
-            } else {
-                Sparring.next(Sparring.state === 'fight' ? 'rest' : 'fight');
-            }
-        }, 1000);
-    },
-
-    pause: () => {
-        clearInterval(Sparring.timer);
-        Sparring.timer = null;
-        const playBtn = document.querySelector('.sp-controls button:first-child');
-        if (playBtn) playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
-    },
-
-    reset: () => {
-        Sparring.pause();
-        const bg = document.getElementById('sp-bg');
-        if (bg) bg.className = 'sparring-display';
-        document.getElementById('sp-timer').innerText = '00:00';
-        document.getElementById('sp-status').innerText = 'PRONTO';
-
-        const playBtn = document.querySelector('.sp-controls button:first-child');
-        if (playBtn) playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
-    }
-};
-
-function toggleVoice() {
-    State.voiceEnabled = !State.voiceEnabled;
-    const btn = document.getElementById('btn-voice');
-    const icon = document.getElementById('voice-icon');
-    const text = document.getElementById('voice-text');
-    if (btn) btn.style.opacity = State.voiceEnabled ? '1' : '0.4';
-    if (icon) icon.className = State.voiceEnabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark';
-    if (text) text.innerText = State.voiceEnabled ? 'ON' : 'OFF';
-}
-
-function renderDatabase() {
-    const list = document.getElementById('db-list');
-    if (!list || typeof EXERCISE_DB === 'undefined') return;
-    list.innerHTML = '';
-    const filtered = EXERCISE_DB.filter(ex => ex.name.toLowerCase().includes(State.search.toLowerCase()));
-    filtered.forEach(ex => {
-        const div = document.createElement('div');
-        div.className = `card type-${ex.type}`;
-        div.onclick = () => addToQueue(ex);
-        div.innerHTML = `<div class="card-info"><h4>${ex.name}</h4><p>${ex.dur}s</p></div><div class="card-meta"><i class="fa-solid fa-plus"></i></div>`;
-        list.appendChild(div);
-    });
-}
-
-function generateWorkout() {
-    if (typeof EXERCISE_DB === 'undefined') return;
-    const mode = document.getElementById('gen-mode').value;
-    const totalTimeGoal = parseInt(document.getElementById('gen-time').value) * 60;
-    let curTime = 0;
-    State.queue = [];
-    const getRnd = (t) => {
-        const l = EXERCISE_DB.filter(e => e.type === t);
-        return l[Math.floor(Math.random() * l.length)];
-    };
-    const warmup = getRnd('warmup');
-    State.queue.push({ ...warmup, uid: Math.random() });
-    curTime += warmup.dur;
-    while (curTime < totalTimeGoal - 300) {
-        let type = (mode === 'cardio') ? (Math.random() > 0.5 ? 'phys' : 'tech') : 'tech';
-        const ex = getRnd(type);
-        State.queue.push({ ...ex, uid: Math.random() });
-        curTime += ex.dur;
-        const p = EXERCISE_DB.find(e => e.id === 'rest_20');
-        if (p) { State.queue.push({ ...p, uid: Math.random() }); curTime += p.dur; }
-    }
-    updateTimeline();
-    System.show("Treino gerado!");
-}
-
-function updateTimeline() {
-    const list = document.getElementById('timeline-list');
-    if (!list) return;
-    list.innerHTML = '';
-    let totalSec = 0;
-
-    if (State.queue.length === 0) {
-        list.innerHTML = '<div style="text-align:center; padding:30px; color:#666">Nenhum exercício adicionado.</div>';
-        const totalTimeEl = document.getElementById('total-time');
-        if (totalTimeEl) totalTimeEl.innerText = '0 min';
-        return;
-    }
-
-    State.queue.forEach((ex, i) => {
-        totalSec += ex.dur;
-        const div = document.createElement('div');
-        div.className = `card type-${ex.type}`;
-        div.innerHTML = `<div style="display:flex; align-items:center; gap:10px;"><span class="timeline-idx">${i + 1}</span><div class="card-info"><h4>${ex.name}</h4><p>${ex.dur}s</p></div></div><button class="btn-delete-card" onclick="removeFromQueue(${ex.uid})"><i class="fa-solid fa-trash"></i></button>`;
-        list.appendChild(div);
-    });
-    const totalTimeEl = document.getElementById('total-time');
-    if (totalTimeEl) totalTimeEl.innerText = `${Math.floor(totalSec / 60)} min`;
-}
-
-const Students = {
-    calculateBelt: (classes) => {
-        return [...BELT_SYSTEM].reverse().find(b => classes >= b.min) || BELT_SYSTEM[0];
-    },
-
-    mark: (id) => {
-        const student = State.students.find(s => s.id === id);
-        if (student) {
-            student.classes++;
-            localStorage.setItem('pib_students', JSON.stringify(State.students));
-            Students.render();
-            System.show(`Presença marcada para ${student.name}!`);
-        }
-    },
-
-    del: (id) => {
-        System.confirm('Deseja excluir este aluno?', () => {
-            State.students = State.students.filter(s => s.id !== id);
-            localStorage.setItem('pib_students', JSON.stringify(State.students));
-            Students.render();
-        });
-    },
-
-    askName: () => {
-        System.input('Nome do novo aluno:', (n) => {
-            State.students.push({ id: Date.now(), name: n, classes: 0 });
-            localStorage.setItem('pib_students', JSON.stringify(State.students));
-            Students.render();
-        });
-    },
-
-    render: () => {
-        const list = document.getElementById('students-list');
-        if (!list) return;
-        list.innerHTML = '';
-
-        State.students.forEach(s => {
-            const currentBelt = Students.calculateBelt(s.classes);
-            const beltIdx = BELT_SYSTEM.indexOf(currentBelt);
-            const nextBelt = BELT_SYSTEM[beltIdx + 1];
-
-            let progress = 100;
-            if (nextBelt) {
-                const range = nextBelt.min - currentBelt.min;
-                const earned = s.classes - currentBelt.min;
-                progress = Math.min((earned / range) * 100, 100);
-            }
-
-            const div = document.createElement('div');
-            div.className = 'student-card';
-            div.innerHTML = `
-                <div style="text-align: center; margin-bottom: 10px;">
-                    <h4 style="color:#fff; margin-bottom: 5px;">${s.name}</h4>
-                    <div style="font-size: 0.8rem; color: ${currentBelt.color}; font-weight: bold;">
-                        ${currentBelt.name}
-                    </div>
-                    <div style="font-size: 0.7rem; color: #888;">${s.classes} Aulas</div>
-                </div>
-                
-                <div style="width: 100%; height: 8px; background: #333; border-radius: 4px; overflow: hidden; margin-bottom: 15px; border: 1px solid #444;">
-                    <div style="width: ${progress}%; height: 100%; background: ${currentBelt.color}; transition: width 0.3s;"></div>
-                </div>
-
-                <div style="display:flex; gap:10px;">
-                    <button onclick="Students.mark(${s.id})" class="btn-action" style="flex:1; font-size: 0.7rem; padding: 8px;">
-                        + PRESENÇA
-                    </button>
-                    <button onclick="Students.del(${s.id})" class="btn-delete-card">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                </div>
-            `;
-            list.appendChild(div);
-        });
-    }
-};
-
-function addToQueue(ex) { State.queue.push({ ...ex, uid: Math.random() }); updateTimeline(); }
-function removeFromQueue(uid) { State.queue = State.queue.filter(i => i.uid !== uid); updateTimeline(); }
-function setSearch(v) { State.search = v; renderDatabase(); }
-const UI = {
-    showDb: () => {
-        document.getElementById('area-db').style.display = 'block';
-        document.getElementById('db-list').style.display = 'flex';
-        document.getElementById('area-saved').style.display = 'none';
-        document.getElementById('saved-list').style.display = 'none';
-        document.getElementById('tab-db')?.classList.add('active');
-        document.getElementById('tab-saved')?.classList.remove('active');
-    },
-    showSaved: () => {
-        document.getElementById('area-db').style.display = 'none';
-        document.getElementById('db-list').style.display = 'none';
-        document.getElementById('area-saved').style.display = 'block';
-        document.getElementById('saved-list').style.display = 'flex';
-        document.getElementById('tab-db')?.classList.remove('active');
-        document.getElementById('tab-saved')?.classList.add('active');
-    }
+let State = {
+    queue: [],
+    combo: [],
+    voice: false,
+    physSelected: [],
+    warmupSelected: []
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (localStorage.getItem('pib_students')) State.students = JSON.parse(localStorage.getItem('pib_students'));
-    setTimeout(() => {
-        renderDatabase();
-        Students.render();
-        Router.go('workout');
-    }, 100);
+    loadTab('hands');
+    renderTimeline();
+    if (!('speechSynthesis' in window)) {
+        document.getElementById('btn-voice').style.display = 'none';
+    }
 });
+
+function toggleVoice() {
+    State.voice = !State.voice;
+    const btn = document.getElementById('btn-voice');
+    const icon = btn.querySelector('i');
+    if (State.voice) {
+        btn.classList.add('active');
+        icon.className = 'fa-solid fa-volume-high';
+        speak("Voz ativada");
+    } else {
+        btn.classList.remove('active');
+        icon.className = 'fa-solid fa-volume-xmark';
+        window.speechSynthesis.cancel();
+    }
+}
+
+function speak(text) {
+    if (!State.voice) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'pt-BR';
+    utterance.rate = 1.1;
+    const voices = window.speechSynthesis.getVoices();
+    const ptVoice = voices.find(v => v.lang.includes('pt-BR') || v.lang.includes('pt_BR'));
+    if (ptVoice) utterance.voice = ptVoice;
+    window.speechSynthesis.speak(utterance);
+}
+
+function loadTab(cat) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    const btns = Array.from(document.querySelectorAll('.tab-btn'));
+    if (cat === 'hands') btns[0].classList.add('active');
+    if (cat === 'legs') btns[1].classList.add('active');
+    if (cat === 'def') btns[2].classList.add('active');
+
+    const grid = document.getElementById('tech-grid');
+    grid.innerHTML = '';
+    DB[cat].forEach(name => {
+        const btn = document.createElement('div');
+        btn.className = 'btn-tech';
+        btn.innerHTML = `<span>${name}</span> <i class="fa-solid fa-plus"></i>`;
+        btn.onclick = () => addToCombo(name);
+        grid.appendChild(btn);
+    });
+}
+
+function addToCombo(name) {
+    State.combo.push(name);
+    updateComboDisplay();
+}
+
+function clearCombo() {
+    State.combo = [];
+    updateComboDisplay();
+}
+
+function updateComboDisplay() {
+    const d = document.getElementById('combo-display');
+    if (State.combo.length === 0) {
+        d.innerText = 'Selecione as técnicas abaixo...';
+        d.className = 'combo-display empty';
+    } else {
+        d.innerText = State.combo.join(' + ');
+        d.className = 'combo-display';
+    }
+}
+
+function submitCombo() {
+    if (State.combo.length === 0) return System.show("Monte uma sequência primeiro!");
+    const name = State.combo.join(' + ');
+    const uid = Math.random();
+    const block = [
+        { uid: Math.random(), name: `A: ${name}`, dur: 120, type: 'tech' },
+        { uid: Math.random(), name: `A: ${name} (Inverter)`, dur: 120, type: 'tech' },
+        { uid: Math.random(), name: 'TROCA DE FUNÇÃO', dur: 60, type: 'rest' },
+        { uid: Math.random(), name: `B: ${name}`, dur: 120, type: 'tech' },
+        { uid: Math.random(), name: `B: ${name} (Inverter)`, dur: 120, type: 'tech' }
+    ];
+    State.queue.push(...block);
+    clearCombo();
+    renderTimeline();
+}
+
+function addStructure(type) {
+    const map = {
+        water: { name: 'ÁGUA', dur: 30, type: 'rest' },
+        preparation: { name: 'PREPARAÇÃO', dur: 120, type: 'rest' }
+    };
+    if (map[type]) {
+        State.queue.push({ ...map[type], uid: Math.random() });
+        renderTimeline();
+    }
+}
+
+function renderTimeline() {
+    const list = document.getElementById('timeline');
+    list.innerHTML = '';
+    let total = 0;
+    if (State.queue.length === 0) {
+        list.innerHTML = '<div class="empty-msg">O treino está vazio.</div>';
+        document.getElementById('total-time').innerText = '0 min';
+        return;
+    }
+    State.queue.forEach(item => {
+        total += item.dur;
+        const card = document.createElement('div');
+        card.className = `card ${item.type}`;
+        let icon = 'fa-fire';
+        if (item.type === 'rest') icon = 'fa-clock';
+        if (item.type === 'warmup') icon = 'fa-person-running';
+        if (item.type === 'phys') icon = 'fa-dumbbell';
+        card.innerHTML = `
+            <div class="card-icon"><i class="fa-solid ${icon}"></i></div>
+            <div class="card-info">
+                <h4>${item.name}</h4>
+                <p>${Math.floor(item.dur / 60)}m ${item.dur % 60}s</p>
+            </div>
+            <button class="card-del" onclick="removeItem(${item.uid})"><i class="fa-solid fa-trash"></i></button>
+        `;
+        list.appendChild(card);
+    });
+    document.getElementById('total-time').innerText = Math.round(total / 60) + ' min';
+}
+
+function removeItem(uid) {
+    State.queue = State.queue.filter(i => i.uid !== uid);
+    renderTimeline();
+}
+
+function clearQueue() {
+    if (State.queue.length === 0) return;
+    System.confirm("Apagar todo o treino?", () => {
+        State.queue = [];
+        renderTimeline();
+    });
+}
+
+function shareToWhatsapp() {
+    if (State.queue.length === 0) return System.show("A lista está vazia! Monte o treino primeiro.", 'error');
+
+    let text = "*🥊 MUAY THAI STUDIO - TREINO DO DIA 🥊*\n";
+    text += `🗓️ Data: ${new Date().toLocaleDateString('pt-BR')}\n`;
+    text += `⏱️ Duração Total: ${document.getElementById('total-time').innerText}\n`;
+    text += "━━━━━━━━━━━━━━━━━━━━\n\n";
+
+    State.queue.forEach((item, index) => {
+        let icon = '👉';
+
+        if (item.type === 'warmup') icon = '🔥';
+        else if (item.type === 'tech') icon = '🥊';
+        else if (item.type === 'phys') icon = '💪';
+        else if (item.type === 'rest') icon = '💧';
+
+        let timeLabel = item.dur >= 60
+            ? `${Math.floor(item.dur / 60)} min`
+            : `${item.dur} seg`;
+
+        if (item.type === 'rest') {
+            text += `-----------------------------------\n`;
+            text += `${icon} *PAUSA / ÁGUA* (${timeLabel})\n`;
+            text += `-----------------------------------\n`;
+        } else {
+            text += `${icon} *${item.name}*\n`;
+            text += `   └ ⏳ Tempo: ${timeLabel}\n\n`;
+        }
+    });
+
+    text += "━━━━━━━━━━━━━━━━━━━━\n";
+    text += "*BOM TREINO!* 🙏";
+
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+}
+
+function openWarmupModal() {
+    State.warmupSelected = [];
+    const grid = document.getElementById('warmup-list');
+    grid.innerHTML = '';
+
+    WARMUP_DB.forEach(name => {
+        const btn = document.createElement('div');
+        btn.className = 'phys-opt';
+        btn.innerText = name;
+        btn.onclick = () => {
+            if (State.warmupSelected.includes(name)) {
+                State.warmupSelected = State.warmupSelected.filter(i => i !== name);
+                btn.classList.remove('selected-warmup');
+            } else {
+                State.warmupSelected.push(name);
+                btn.classList.add('selected-warmup');
+            }
+        };
+        grid.appendChild(btn);
+    });
+    document.getElementById('warmup-modal').style.display = 'flex';
+}
+
+function closeWarmupModal() { document.getElementById('warmup-modal').style.display = 'none'; }
+
+function addWarmupExercises() {
+    if (State.warmupSelected.length === 0) return System.show("Selecione algo!");
+    const dur = parseInt(document.getElementById('warmup-time').value);
+
+    State.warmupSelected.forEach(name => {
+        State.queue.push({ uid: Math.random(), name: name.toUpperCase(), dur: dur, type: 'warmup' });
+    });
+    closeWarmupModal();
+    renderTimeline();
+}
+
+function openPhysModal() {
+    State.physSelected = [];
+    const grid = document.getElementById('phys-list');
+    grid.innerHTML = '';
+
+    PHYS_DB.forEach(name => {
+        const btn = document.createElement('div');
+        btn.className = 'phys-opt';
+        btn.innerText = name;
+        btn.onclick = () => {
+            if (State.physSelected.includes(name)) {
+                State.physSelected = State.physSelected.filter(i => i !== name);
+                btn.classList.remove('selected');
+            } else {
+                State.physSelected.push(name);
+                btn.classList.add('selected');
+            }
+        };
+        grid.appendChild(btn);
+    });
+    document.getElementById('phys-modal').style.display = 'flex';
+}
+
+function closePhysModal() { document.getElementById('phys-modal').style.display = 'none'; }
+
+function addPhysExercises() {
+    if (State.physSelected.length === 0) return System.show("Selecione algum exercício!");
+    const dur = parseInt(document.getElementById('phys-time').value);
+
+    State.physSelected.forEach(name => {
+        State.queue.push({ uid: Math.random(), name: name.toUpperCase(), dur: dur, type: 'phys' });
+    });
+    closePhysModal();
+    renderTimeline();
+}
+
+const Player = {
+    idx: 0, timer: null, timeLeft: 0, total: 0,
+    open: () => {
+        if (State.queue.length === 0) return System.show("Lista vazia!");
+        document.getElementById('player-modal').style.display = 'flex';
+        Player.idx = 0; Player.load();
+    },
+    load: () => {
+        const item = State.queue[Player.idx];
+        document.getElementById('p-title').innerText = item.name;
+        Player.timeLeft = item.dur;
+        Player.total = item.dur;
+        let c = '#ffd700';
+        let tagTxt = 'TREINO';
+        if (item.type === 'rest') { c = '#00a8ff'; tagTxt = 'DESCANSO'; }
+        if (item.type === 'phys') { c = '#eb4d4b'; tagTxt = 'FÍSICO'; }
+        if (item.type === 'warmup') { c = '#ff9f43'; tagTxt = 'AQUECIMENTO'; }
+        const pTag = document.getElementById('p-tag');
+        pTag.style.background = c;
+        pTag.innerText = tagTxt;
+        document.getElementById('p-bar').style.background = c;
+        Player.update();
+        SOUNDS.bell.play();
+        speak(item.name);
+    },
+    update: () => {
+        const m = Math.floor(Player.timeLeft / 60);
+        const s = Player.timeLeft % 60;
+        document.getElementById('p-timer').innerText = `${m}:${s.toString().padStart(2, '0')}`;
+        document.getElementById('p-bar').style.width = ((Player.timeLeft / Player.total) * 100) + '%';
+    },
+    toggle: () => {
+        if (Player.timer) {
+            clearInterval(Player.timer); Player.timer = null;
+            document.getElementById('p-play-btn').innerHTML = '<i class="fa-solid fa-play"></i>';
+        } else {
+            Player.timer = setInterval(() => {
+                if (Player.timeLeft > 0) {
+                    Player.timeLeft--; Player.update();
+                    if (Player.timeLeft <= 3 && Player.timeLeft > 0) SOUNDS.alert.play();
+                } else {
+                    Player.next();
+                }
+            }, 1000);
+            document.getElementById('p-play-btn').innerHTML = '<i class="fa-solid fa-pause"></i>';
+        }
+    },
+    next: () => {
+        clearInterval(Player.timer); Player.timer = null;
+        if (Player.idx < State.queue.length - 1) {
+            Player.idx++; Player.load(); Player.toggle();
+        } else {
+            Player.close(); System.show("Treino Finalizado!");
+        }
+    },
+    prev: () => {
+        if (Player.idx > 0) {
+            clearInterval(Player.timer); Player.timer = null;
+            Player.idx--; Player.load(); Player.toggle();
+        }
+    },
+    close: () => {
+        clearInterval(Player.timer); Player.timer = null;
+        document.getElementById('player-modal').style.display = 'none';
+        window.speechSynthesis.cancel();
+    }
+};
+
+const System = {
+    show: (msg) => {
+        document.getElementById('sys-msg').innerText = msg;
+        document.getElementById('sys-cancel').style.display = 'none';
+        const btnOk = document.getElementById('sys-ok');
+        btnOk.innerText = 'OK';
+        btnOk.onclick = () => System.close();
+        document.getElementById('sys-modal').style.display = 'flex';
+    },
+    confirm: (msg, cb) => {
+        document.getElementById('sys-msg').innerText = msg;
+        document.getElementById('sys-cancel').style.display = 'block';
+        const btnOk = document.getElementById('sys-ok');
+        btnOk.innerText = 'CONFIRMAR';
+        btnOk.onclick = () => { cb(); System.close(); };
+        document.getElementById('sys-modal').style.display = 'flex';
+    },
+    close: () => document.getElementById('sys-modal').style.display = 'none'
+};
