@@ -128,6 +128,69 @@ function addStructure(type) {
     }
 }
 
+function generateSmartClass() {
+    if (State.queue.length > 0) {
+        System.confirm("Isso apagará o treino atual. Continuar?", executeAIGeneration);
+    } else {
+        executeAIGeneration();
+    }
+}
+
+function executeAIGeneration() {
+    State.queue = [];
+
+    const themes = [
+        { name: "Foco em Boxe", hands: 3, legs: 0, def: 1 },
+        { name: "Foco em Chutes", hands: 1, legs: 2, def: 1 },
+        { name: "Muay Khao (Clinch/Joelho)", hands: 1, legs: 3, def: 0 },
+        { name: "Misto Completo", hands: 2, legs: 2, def: 1 }
+    ];
+
+    const theme = themes[Math.floor(Math.random() * themes.length)];
+    const warmupMove = WARMUP_DB[Math.floor(Math.random() * WARMUP_DB.length)];
+
+    State.queue.push({ uid: Math.random(), name: `AQUECIMENTO: ${warmupMove.toUpperCase()}`, dur: 300, type: 'warmup' });
+    State.queue.push({ uid: Math.random(), name: 'PREPARAÇÃO / BANDAGEM', dur: 120, type: 'rest' });
+
+    for (let round = 1; round <= 5; round++) {
+        let combo = [];
+        let moveCount = Math.floor(Math.random() * 2) + 3;
+
+        for (let j = 0; j < moveCount; j++) {
+            let pool = [];
+            for (let k = 0; k < theme.hands; k++) pool.push('hands');
+            for (let k = 0; k < theme.legs; k++) pool.push('legs');
+            for (let k = 0; k < theme.def; k++) pool.push('def');
+            if (pool.length === 0) pool = ['hands', 'legs', 'def'];
+
+            let cat = pool[Math.floor(Math.random() * pool.length)];
+
+            let move;
+            if (theme.name === "Muay Khao (Clinch/Joelho)" && cat === 'legs') {
+                const khaoMoves = DB.legs.filter(m => m.includes('Joelhada') || m.includes('Teep'));
+                move = khaoMoves[Math.floor(Math.random() * khaoMoves.length)];
+            } else {
+                move = DB[cat][Math.floor(Math.random() * DB[cat].length)];
+            }
+            combo.push(move);
+        }
+
+        let comboStr = combo.join(' + ');
+
+        State.queue.push({ uid: Math.random(), name: `ROUND ${round} - A: ${comboStr}`, dur: 180, type: 'tech' });
+        State.queue.push({ uid: Math.random(), name: `TROCA DE FUNÇÃO`, dur: 60, type: 'rest' });
+        State.queue.push({ uid: Math.random(), name: `ROUND ${round} - B: ${comboStr}`, dur: 180, type: 'tech' });
+        State.queue.push({ uid: Math.random(), name: `DESCANSO / ÁGUA`, dur: 60, type: 'rest' });
+    }
+
+    const physMove1 = PHYS_DB[Math.floor(Math.random() * PHYS_DB.length)];
+    const physMove2 = PHYS_DB[Math.floor(Math.random() * PHYS_DB.length)];
+    State.queue.push({ uid: Math.random(), name: `FÍSICO: ${physMove1.toUpperCase()} + ${physMove2.toUpperCase()}`, dur: 180, type: 'phys' });
+
+    renderTimeline();
+    System.show(`🥊 Aula Gerada com Sucesso!\n\nTema: ${theme.name}\nDuração: 50 min exatos!`);
+}
+
 function renderTimeline() {
     const list = document.getElementById('timeline');
     list.innerHTML = '';
@@ -292,11 +355,11 @@ const Player = {
         document.getElementById('p-title').innerText = item.name;
         Player.timeLeft = item.dur;
         Player.total = item.dur;
-        let c = '#fbbf24';
+        let c = '#FF0000';
         let tagTxt = 'TREINO';
-        if (item.type === 'rest') { c = '#0ea5e9'; tagTxt = 'DESCANSO'; }
-        if (item.type === 'phys') { c = '#f43f5e'; tagTxt = 'FÍSICO'; }
-        if (item.type === 'warmup') { c = '#f97316'; tagTxt = 'AQUECIMENTO'; }
+        if (item.type === 'rest') { c = '#6E7278'; tagTxt = 'DESCANSO'; }
+        if (item.type === 'phys') { c = '#B87A3D'; tagTxt = 'FÍSICO'; }
+        if (item.type === 'warmup') { c = '#B87A3D'; tagTxt = 'AQUECIMENTO'; }
         const pTag = document.getElementById('p-tag');
         pTag.style.background = c;
         pTag.innerText = tagTxt;
