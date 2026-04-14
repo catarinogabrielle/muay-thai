@@ -292,11 +292,11 @@ const Player = {
         document.getElementById('p-title').innerText = item.name;
         Player.timeLeft = item.dur;
         Player.total = item.dur;
-        let c = '#ffd700';
+        let c = '#fbbf24';
         let tagTxt = 'TREINO';
-        if (item.type === 'rest') { c = '#00a8ff'; tagTxt = 'DESCANSO'; }
-        if (item.type === 'phys') { c = '#eb4d4b'; tagTxt = 'FÍSICO'; }
-        if (item.type === 'warmup') { c = '#ff9f43'; tagTxt = 'AQUECIMENTO'; }
+        if (item.type === 'rest') { c = '#0ea5e9'; tagTxt = 'DESCANSO'; }
+        if (item.type === 'phys') { c = '#f43f5e'; tagTxt = 'FÍSICO'; }
+        if (item.type === 'warmup') { c = '#f97316'; tagTxt = 'AQUECIMENTO'; }
         const pTag = document.getElementById('p-tag');
         pTag.style.background = c;
         pTag.innerText = tagTxt;
@@ -359,7 +359,7 @@ const System = {
     },
     confirm: (msg, cb) => {
         document.getElementById('sys-msg').innerText = msg;
-        document.getElementById('sys-cancel').style.display = 'block';
+        document.getElementById('sys-cancel').style.display = 'inline-block';
         const btnOk = document.getElementById('sys-ok');
         btnOk.innerText = 'CONFIRMAR';
         btnOk.onclick = () => { cb(); System.close(); };

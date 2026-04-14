@@ -6,27 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MUAY THAI STUDIO</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Teko:wght@600&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Teko:wght@600&display=swap"
         rel="stylesheet">
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="stylesheet" href="style.css">
-
     <link rel="icon" type="image/png" href="favicon/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="favicon/favicon.svg" />
     <link rel="shortcut icon" href="favicon/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png" />
     <link rel="manifest" href="favicon/site.webmanifest" />
-
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="MUAY THAI STUDIO">
-    <meta property="og:description"
-        content="Crie e personalize seus próprios treinos de Muay Thai com nosso gerador de treinos fácil de usar.">
-
-    <meta property="og:image" content="https://SEU-SITE-AQUI.com/icon.png">
-    <meta property="og:image:type" content="image/png">
-
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
 </head>
 
 <body>
@@ -41,25 +29,25 @@
         <div class="sidebar">
             <div class="struct-grid">
                 <button class="btn-struct warmup" onclick="openWarmupModal()">
-                    <i class="fa-solid fa-person-running"></i> AQUECIMENTO
+                    <i class="fa-solid fa-fire"></i> AQUECIMENTO
                 </button>
                 <button class="btn-struct water" onclick="addStructure('water')">
-                    <i class="fa-solid fa-glass-water"></i> ÁGUA
+                    <i class="fa-solid fa-droplet"></i> ÁGUA
                 </button>
                 <button class="btn-struct phys" onclick="openPhysModal()">
                     <i class="fa-solid fa-dumbbell"></i> FÍSICO
                 </button>
                 <button class="btn-struct preparation" onclick="addStructure('preparation')">
-                    <i class="fa-solid fa-chalkboard-user"></i> PREPARAÇÃO
+                    <i class="fa-solid fa-stopwatch"></i> PREPARAÇÃO
                 </button>
             </div>
 
             <div class="combo-area">
                 <div class="combo-header">
                     <span>Sequência Atual:</span>
-                    <button onclick="clearCombo()"
-                        style="background:none; border:none; color:#ff4757; cursor:pointer;"><i
-                            class="fa-solid fa-eraser"></i></button>
+                    <button onclick="clearCombo()" class="btn-clear-combo">
+                        <i class="fa-solid fa-eraser"></i>
+                    </button>
                 </div>
                 <div id="combo-display" class="combo-display empty">Selecione as técnicas abaixo...</div>
                 <button class="btn-add" onclick="submitCombo()">Adicionar ao Treino</button>
@@ -100,9 +88,8 @@
             <div id="p-tag" class="p-tag">TREINO</div>
             <h1 id="p-timer" class="p-timer">00:00</h1>
             <h2 id="p-title" class="p-title">...</h2>
-            <div
-                style="width:100%; height:8px; background:#333; margin-bottom:30px; border-radius:4px; overflow:hidden;">
-                <div id="p-bar" style="width:0%; height:100%; background:#ffd700; transition:width 1s linear;"></div>
+            <div class="progress-container">
+                <div id="p-bar" class="progress-bar"></div>
             </div>
             <div class="p-controls">
                 <button class="p-btn" onclick="Player.prev()"><i class="fa-solid fa-backward-step"></i></button>
@@ -116,7 +103,7 @@
 
     <div id="warmup-modal" class="overlay">
         <div class="modal modal-wide">
-            <h3 style="color:#ff9f43; margin-bottom:15px; text-transform: uppercase;">AQUECIMENTO</h3>
+            <h3 class="modal-title warmup-title">AQUECIMENTO</h3>
             <select id="warmup-time" class="phys-time">
                 <option value="60">1 Minuto</option>
                 <option value="120">2 Minutos</option>
@@ -127,15 +114,14 @@
             <div id="warmup-list" class="phys-list"></div>
             <div class="sys-btn-group">
                 <button class="sys-btn cancel" onclick="closeWarmupModal()">Cancelar</button>
-                <button class="sys-btn confirm" style="background:#ff9f43; color:#000;"
-                    onclick="addWarmupExercises()">Adicionar</button>
+                <button class="sys-btn confirm warmup-confirm" onclick="addWarmupExercises()">Adicionar</button>
             </div>
         </div>
     </div>
 
     <div id="phys-modal" class="overlay">
         <div class="modal modal-wide">
-            <h3 style="color:#eb4d4b; margin-bottom:15px; text-transform: uppercase;">Exercícios Físicos</h3>
+            <h3 class="modal-title phys-title">Exercícios Físicos</h3>
             <select id="phys-time" class="phys-time">
                 <option value="30">30 Segundos</option>
                 <option value="45">45 Segundos</option>
@@ -145,18 +131,16 @@
             <div id="phys-list" class="phys-list"></div>
             <div class="sys-btn-group">
                 <button class="sys-btn cancel" onclick="closePhysModal()">Cancelar</button>
-                <button class="sys-btn confirm" style="background:#eb4d4b; color:#fff;"
-                    onclick="addPhysExercises()">Adicionar</button>
+                <button class="sys-btn confirm phys-confirm" onclick="addPhysExercises()">Adicionar</button>
             </div>
         </div>
     </div>
 
     <div id="sys-modal" class="overlay">
-        <div class="modal" style="max-width:350px;">
-            <h3 id="sys-msg" style="color:#fff; margin-bottom:25px; font-size: 1.2rem;">Mensagem</h3>
+        <div class="modal sys-modal-box">
+            <h3 id="sys-msg" class="sys-msg">Mensagem</h3>
             <div class="sys-btn-group">
-                <button id="sys-cancel" class="sys-btn cancel" style="display:none;"
-                    onclick="System.close()">Cancelar</button>
+                <button id="sys-cancel" class="sys-btn cancel sys-cancel-btn" onclick="System.close()">Cancelar</button>
                 <button id="sys-ok" class="sys-btn confirm">OK</button>
             </div>
         </div>
