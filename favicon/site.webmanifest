@@ -3,13 +3,13 @@
   "short_name": "CT MATILHA",
   "icons": [
     {
-      "src": "/icone.png",
+      "src": "/favicon.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/icone.png",
+      "src": "/favicon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
