@@ -758,6 +758,7 @@ header {
   .content {
     flex: none;
     height: auto;
+    border-left: none;
   }
 
   .timeline {
