@@ -10,9 +10,9 @@
   --danger: #FF0000;
   --danger-hover: #B30000;
   --success: #25D366;
-  --phys: #6E7278;
+  --phys: #00eeff;
   --warmup: #ecd60e;
-  --water: #6E7278;
+  --water: #0004ff;
   --ai: #B0B4B8;
   --nav-height: 70px;
 }
@@ -736,21 +736,33 @@ header {
 @media (max-width: 768px) {
   .main-container {
     flex-direction: column;
+    overflow-y: auto;
+    display: block;
   }
 
   .sidebar {
     width: 100%;
-    flex: 1.2;
+    flex: none;
     height: auto;
     border-right: none;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 4px solid var(--panel);
     padding: 12px;
     gap: 10px;
   }
 
+  .tech-container {
+    height: 320px;
+    overflow-y: auto;
+  }
+
   .content {
-    flex: 1;
-    min-height: 0;
+    flex: none;
+    height: auto;
+  }
+
+  .timeline {
+    height: 400px;
+    overflow-y: auto;
   }
 
   .brand-icon {
@@ -799,11 +811,6 @@ header {
 
   .tab-btn {
     padding: 10px;
-  }
-
-  .tech-container {
-    flex: 1;
-    min-height: 180px;
   }
 
   .btn-tech {

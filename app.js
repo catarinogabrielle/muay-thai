@@ -358,8 +358,8 @@ const Player = {
         let c = '#FF0000';
         let tagTxt = 'TREINO';
         if (item.type === 'rest') { c = '#6E7278'; tagTxt = 'DESCANSO'; }
-        if (item.type === 'phys') { c = '#B87A3D'; tagTxt = 'FÍSICO'; }
-        if (item.type === 'warmup') { c = '#B87A3D'; tagTxt = 'AQUECIMENTO'; }
+        if (item.type === 'phys') { c = '#ecd60e'; tagTxt = 'FÍSICO'; }
+        if (item.type === 'warmup') { c = '#0049d1'; tagTxt = 'AQUECIMENTO'; }
         const pTag = document.getElementById('p-tag');
         pTag.style.background = c;
         pTag.innerText = tagTxt;
